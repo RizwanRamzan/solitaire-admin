@@ -1,42 +1,51 @@
 import { useState } from "react";
-import { Col, Form, Input, Row, Spin } from "antd";
+import { Col, Form, Input, Row, Spin, message } from "antd";
 import { Logo } from "../../assets";
 import "./auth.scss";
 import "../../GeneralStyle/index.scss";
 import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
-import { setUser, setToken } from "../../Redux/Reducers/authSlice";
+import { setUser, setToken, setUserCompleteDetails } from "../../Redux/Reducers/authSlice";
+import { postRequest } from "../../service/apiCall";
 
 const Login = () => {
   const [userBody, setUserBody] = useState({
     email: "",
     password: "",
   });
-  const baseUrl = import.meta.env.VITE_BASE_URL;
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
 
-  const formHandler = async (e:any) => {
-    dispatch(setUser({email:e?.email,password:e?.password}))
-    navigate("/admin/dashboard")
 
-    // setLoading(true);
-    // fetch(`${baseUrl}/api/v1/auth/login`, {
-    //   method: "post",
-    //   headers: {
-    //     "Content-Type": "application/json",
-    //   },
-    //   body: JSON.stringify(userBody),
-    // })
-    //   .then((res) => res.json())
-    //   .then((data) => {
-    //     dispatch(setUser(data.user));
-    //     dispatch(setToken(data.token));
-    //     setLoading(false);
-    //     navigate("/admin/trading/sports");
-    //   });
-  };
+
+  const formHandler = async (e: any) => {
+    setLoading(true)
+
+    const onSuccess = (res: any) => {
+      console.log(res,"sakjcnsakncjndsckjds")
+        message.success(res?.message)
+        dispatch(setUser(res.user));
+        dispatch(setToken(res?.token))
+        dispatch(setUserCompleteDetails(res.data))
+        localStorage.setItem("adminToken", res?.token)
+        navigate("/admin/dashboard")
+        setLoading(false)
+    }
+    const onError = (err: any) => {
+        message.error(err?.message)
+        setLoading(false)
+    }
+
+    
+    const formData = {
+      email: e?.email,
+      password: e?.password,
+    };
+
+    await postRequest(formData, "user/login", true, onSuccess, onError)
+}
+
 
   // const onChange = (e: any) => {
   //   const { name, value } = e.target;
@@ -44,7 +53,7 @@ const Login = () => {
   // };
 
   return (
-    // <Spin spinning={loading}>
+    <Spin spinning={loading}>
       <div className="auth">
         <Row style={{ width: "100%" }}>
           <Col span={24}>
@@ -98,7 +107,7 @@ const Login = () => {
           </div>
         </div>
       </div>
-    // </Spin>
+    </Spin>
   );
 };
 

@@ -6,13 +6,13 @@ import AuthRoutes from './Routes/AuthRoutes';
 
 function App() {
 
-  const token = useSelector((state: any) => state.authReducer.user);
+  const token = useSelector((state: any) => state.authReducer.Admintoken);
 
 
   return (
     <>
       {
-        token?.email ?
+        token ?
           <Layout>< HomeRoutes /></Layout >
           :
           <AuthRoutes />

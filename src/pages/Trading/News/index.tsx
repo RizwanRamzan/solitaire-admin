@@ -1,42 +1,122 @@
-import { Col, Form, Input, Row, Spin, message } from "antd";
-const { TextArea } = Input;
+import { Col, DatePicker, Form, Input, Modal, Row, Spin, message } from "antd";
 import TopBar from "../../../Component/Layout/topBar";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ImgUpload } from "../../../assets";
-import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
-import "./sports.scss";
+import NewTable from "./newTable";
+import { useMediaQuery } from "react-responsive";
+import "./sports.scss"
+import { deleteRequest, getRequest, postRequestFormData } from "../../../service/apiCall";
 
-type contectData = {
-  image: any;
-};
 
-type MyObject = {
-  bid: String,
-  share: String,
-  bidamount: String
-  // userId: String
-}
 
 const Sports = () => {
-  const token = useSelector((state: any) => state.authReducer.Admintoken);
-  const baseUrl = import.meta.env.VITE_BASE_URL;
-  const navigate = useNavigate();
-  const [dataBody, setDataBody] = useState({
-    title: "",
-    resolution: "",
-    endDate: "", // Add endDate and endTime fields to dataBody
-    endTime: ""
+  const mobileResponsive = useMediaQuery({
+    query: "(max-width: 800px)",
   });
-  const [img, setImg] = useState<File | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [bid, setBid] = useState<MyObject[]>([])
 
-  const [team1, setTeam1] = useState<contectData>({
+  const token = useSelector((state: any) => state.authReducer.Admintoken);
+  const [loading, setLoading] = useState(false);
+  const [data, setData] = useState([]);
+  const [endModal, setEndModal] = useState<any>({});
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [Open, setOpen] = useState(false);
+  const [user, setUser] = useState<any>({});
+  const [img, setImg] = useState<File | null>(null);
+  const [team1, setTeam1] = useState<any>({
     image: null,
   });
 
+
+
+  const GetAllTrading = async () => {
+    setLoading(true);
+
+    const onSuccess = (res: any) => {
+      setLoading(false);
+      setData(res?.data?.reverse());
+    };
+
+    const onError = () => {
+      setLoading(false);
+    };
+
+    await getRequest("", "news/get-all", true, onSuccess, onError);
+  };
+
+  useEffect(() => {
+    GetAllTrading();
+  }, []);
+
+  const EndEvent = (object: any) => {
+    setEndModal(object);
+  };
+
+  const DeleteEvents = async (object:any) => {
+    setLoading(true);
+    const onSuccess = (res: any) => {
+      setLoading(false);
+      message.success(res?.message)
+    };
+
+    const onError = () => {
+      setLoading(false);
+    };
+
+    await deleteRequest("", `news/delete/${object?._id}`, true, onSuccess, onError);
+    GetAllTrading();
+  };
+
+
   const [form] = Form.useForm();
+
+  const OpenModal = () => {
+    setOpen(true);
+  };
+  const handleOk = () => {
+    setOpen(false);
+    setIsModalOpen(false);
+    form.resetFields();
+    setTeam1({ image: null });
+  };
+  const handleCancel = () => {
+    setIsModalOpen(false);
+    setOpen(false);
+    form.resetFields();
+    setTeam1({ image: null });
+  };
+
+  const formHandler = async (e: any) => {
+    if (team1?.image) {
+
+    setLoading(true);
+
+    const onSuccess = (res: any) => {
+      console.log(res, "sakjcnsakncjndsckjds");
+      message.success(res?.message);
+      setLoading(false);
+      form.resetFields();
+      handleOk()
+    };
+    const onError = (err: any) => {
+      message.error(err?.message);
+      setLoading(false);
+    };
+
+    const formData = {
+      date: e?.date,
+      description: e?.desc,
+      image: img,
+      url:e?.link
+    };
+
+    await postRequestFormData(formData, "news/add", true, onSuccess, onError);
+    GetAllTrading()
+  } else {
+    message.warning("please upload image");
+  }
+  };
+
 
   const handleTeam1 = (event: any) => {
     const file = event.target.files[0];
@@ -48,79 +128,32 @@ const Sports = () => {
     };
   };
 
-  const formHandler = async (value: any) => {
-    if (team1?.image) {
-      setLoading(true);
-
-      let formData = new FormData();
-      Object.entries(dataBody).forEach(([key, value]) => {
-        formData.append(key, value);
-      });
-      formData.append("category", value.category);
-      formData.append(`bids`, JSON.stringify(bid));
-      if (img) {
-        formData.append("image", img);
-      }
-      fetch(`${baseUrl}/api/v1/admin/trading/sports`, {
-        method: "post",
-        headers: {
-          "x-sh-auth": token,
-        },
-        body: formData,
-      })
-        .then((res) => res.json())
-        .then((data) => {
-          setDataBody({
-            title: "",
-            resolution: "",
-            endDate: "",
-            endTime: ""
-          });
-          setLoading(false);
-          if (data?.success) {
-            form.resetFields();
-            message.success(data?.message);
-            setTeam1({ image: null });
-            navigate("/admin/dashboard");
-          }
-        });
-    } else {
-      message.warning("please upload image");
-    }
-  };
-
-  const onChange = (e: any) => {
-    const { name, value } = e.target;
-    setDataBody({ ...dataBody, [name]: value });
-  };
-
-  const onChangePrice = (e: any) => {
-    const { name, value } = e.target;
-    var newArr = [...bid, {
-      bid: name,
-      share: "1",
-      bidamount: value
-    }]
-    setBid(newArr)
-  };
-
-  // const handleChange = (value: string) => {
-  //   setDataBody({ ...dataBody, category: value });
-  //   console.log(dataBody)
-  // };
-
   return (
     <Spin spinning={loading}>
-      <TopBar title="News"/>
-      <Form
-        form={form}
-        onFinish={formHandler}
-        layout="vertical"
-        style={{ marginTop: "20px", paddingBottom: "30px" }}
-        encType="multipart/form-data"
+      <TopBar title="News" button="Add News" OpenModal={OpenModal}/>
+      <Row>
+        <Col span={24}>
+          <h2 className="all-trading"> All News </h2>
+        </Col>
+      </Row>
+      <NewTable
+        EndEvent={EndEvent}
+        DeleteEvents={DeleteEvents}
+        OpenModal={OpenModal}
+        mobileResponsive={mobileResponsive}
+        data={data}
+        setUser={setUser}
+      />
+
+      <Modal
+        title="Add News"
+        footer={false}
+        open={Open}
+        onOk={handleOk}
+        onCancel={handleCancel}
       >
-        <Row gutter={10}>
-          <Col span={18}>
+        <Row>
+        <Col span={24}>
             <div className="form-left">
               {team1.image ? (
                 <>
@@ -130,7 +163,6 @@ const Sports = () => {
                     onClick={handleTeam1}
                   >
                     <img src={team1.image} alt="uploaded" />
-                    <span>Team 1</span>
                   </label>
                 </>
               ) : (
@@ -140,7 +172,6 @@ const Sports = () => {
                     htmlFor="image-upload1"
                   >
                     <img src={ImgUpload} />
-                    <span>Team 1</span>
                   </label>
                 </>
               )}
@@ -154,121 +185,28 @@ const Sports = () => {
               />
             </div>
           </Col>
-
-          <Col span={18}>
-            <Form.Item name="title" label="Title" rules={[{ required: true }]}>
-              <Input
-                placeholder="Enter the Trade Title"
-                name="title"
-                id="title"
-                className="ant-input-affix-wrapper"
-                value={dataBody.title}
-                onChange={onChange}
-              />
+          <Form form={form} onFinish={formHandler} layout='vertical' style={{width:"100%"}}>
+            <Col span={24}>
+            <Form.Item name='desc' label="Description" rules={[{required:true}]}>
+              <Input className="ant-input-affix-wrapper" placeholder="Enter news description"/>
             </Form.Item>
-          </Col>
-
-          <Col span={18}>
-            <Form.Item
-              className="testarea"
-              name="resolution"
-              label="Resolution"
-              rules={[{ required: true }]}
-            >
-              <TextArea
-                placeholder="Enter Resolution"
-                name="resolution"
-                id="resolution"
-                className="ant-input-affix-wrapper"
-                rows={4}
-                value={dataBody.resolution}
-                onChange={onChange}
-              />
+            </Col>
+            <Col span={24}>
+            <Form.Item name='date' label="New Date" rules={[{required:true}]}>
+              <DatePicker picker='date' className="ant-input-affix-wrapper" placeholder="Enter new date"/>
             </Form.Item>
-          </Col>
-
-          <Col span={18}>
-            <Form.Item
-              name="category"
-              label="Category"
-              rules={[{ required: true }]}
-            >
-              <Input
-                placeholder="Please enter a Category"
-                className="ant-input-affix-wrapper"
-                style={{ width: "100%" }}
-              />
+            </Col>
+            <Col span={24}>
+            <Form.Item name='link' label="New Url" rules={[{required:true}]}>
+              <Input className="ant-input-affix-wrapper" placeholder="Enter new url"/>
             </Form.Item>
-          </Col>
-
-          <Col span={18}>
-            <Form.Item
-              name="endDate"
-              label="End Date"
-              rules={[{ required: true }]}
-            >
-              <Input
-                type="date"
-                name="endDate"
-                id="endDate"
-                className="ant-input-affix-wrapper"
-                onChange={onChange}
-              />
-            </Form.Item>
-          </Col>
-
-          <Col span={18}>
-            <Form.Item
-              name="endTime"
-              label="End Time"
-              rules={[{ required: true }]}
-            >
-              <Input
-                type="time"
-                name="endTime"
-                id="endTime"
-                className="ant-input-affix-wrapper"
-                onChange={onChange}
-              />
-            </Form.Item>
-          </Col>
-          <Col span={18}>
-            <Form.Item
-              name="yes"
-              label="Start Price for Yes"
-              rules={[{ required: true }]}
-            >
-              <Input
-                type="number"
-                name="yes"
-                id="yes"
-                className="ant-input-affix-wrapper"
-                onChange={onChangePrice}
-              />
-            </Form.Item>
-          </Col>
-          <Col span={18}>
-            <Form.Item
-              name="no"
-              label="Start Price for No"
-              rules={[{ required: true }]}
-            >
-              <Input
-                type="number"
-                name="no"
-                id="no"
-                className="ant-input-affix-wrapper"
-                onChange={onChangePrice}
-              />
-            </Form.Item>
-          </Col>
+            </Col>
+            <Col style={{display:"flex",justifyContent:"center"}} span={24}>
+              <button style={{width:"100px"}} >Submit</button>
+            </Col>
+          </Form>
         </Row>
-        <Row gutter={10}>
-          <Col>
-            <button style={{ width: "100px" }}>Submit</button>
-          </Col>
-        </Row>
-      </Form>
+      </Modal>
     </Spin>
   );
 };

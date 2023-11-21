@@ -4,11 +4,10 @@ import { ReactSVG } from "react-svg";
 import { BackArrow, DashboardIcon, Logo, MenuIcon, TryAngleIcon } from "../../assets";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { DownOutlined } from "@ant-design/icons";
 import Breadcrumb from "../../Utils/Helpers/BreadCrumb";
 
 
-const TopBar = ({ title,breadcrumb,consdition }: any) => {
+const TopBar = ({ title,breadcrumb,consdition ,button,OpenModal}: any) => {
 
     const navigate = useNavigate();
 
@@ -63,8 +62,16 @@ const TopBar = ({ title,breadcrumb,consdition }: any) => {
                         </div>
                     }
                     
-                    {title && !consdition &&<p>{title}</p>}
+                    {title && !consdition && !button &&<p>{title}</p>}
 
+
+{
+                        button && title &&
+                        <div style={{ paddingBottom: "20px",display:"flex",justifyContent:"space-between",alignItems:"center" }} className="main-top">
+                            <p>{title}</p>
+                            <button onClick={()=>OpenModal()} style={{marginTop:0,width:"150px"}}>{button}</button>
+                        </div>
+                    }
                    
                 </div>
             </div>

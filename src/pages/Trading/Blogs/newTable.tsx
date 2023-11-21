@@ -1,11 +1,9 @@
 import { Table } from "antd";
-import moment from "moment";
 // General Style
-import "../../GeneralStyle/index.scss";
-import { Edit, LogoutIcon, Trash } from "../../assets";
 import { ReactSVG } from "react-svg";
+import { Trash } from "../../../assets";
 
-const DashboardTable = ({ mobileResponsive, data, EndEvent,DeleteEvents,OpenModal,setUser }: any) => {
+const NewTable = ({ mobileResponsive, data,DeleteEvents}: any) => {
 
   const columns = [
     
@@ -16,17 +14,16 @@ const DashboardTable = ({ mobileResponsive, data, EndEvent,DeleteEvents,OpenModa
       render: (_: any, object: any) => <img width="40px" height="40px" src="/tabLogo.png" /> || "-",
       width: "10%",
     },
-
     {
       key: "8",
-      title: "Slide Name",
-      render: (_: any, object: any) => object?.name || "-",
+      title: "Blog Title",
+      render: (_: any, object: any) => object?.title || "-",
       width: "10%",
     },
   
     {
       key: "2",
-      title: "Slide Description",
+      title: "Blog Description",
       render: (_: any, object: any) => object?.description || "-",
       width: "30%",
     },
@@ -35,16 +32,6 @@ const DashboardTable = ({ mobileResponsive, data, EndEvent,DeleteEvents,OpenModa
       title: "Action",
       render: (_: any, object: any) => (
         <div style={{ display: "flex", gap: 20, justifyContent: "center" }}>
-          {/* <ReactSVG
-            onClick={() =>{
-                 EndEvent(object)
-                 setUser(object)
-                 OpenModal()
-                }}
-            width={20}
-            src={LogoutIcon}
-            className="end-point"
-          /> */}
 
           <ReactSVG onClick={() => DeleteEvents(object)} style={{ cursor: "pointer" }} width={20} src={Trash} />
         </div>
@@ -68,4 +55,4 @@ const DashboardTable = ({ mobileResponsive, data, EndEvent,DeleteEvents,OpenModa
 };
 
 
-export default DashboardTable;
+export default NewTable;

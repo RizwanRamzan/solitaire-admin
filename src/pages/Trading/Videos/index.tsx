@@ -1,116 +1,78 @@
 import { Col, Form, Input, Row, Spin, message } from "antd";
-const { TextArea } = Input;
 import TopBar from "../../../Component/Layout/topBar";
-import { useState } from "react";
-import { ImgUpload } from "../../../assets";
-import { useNavigate } from "react-router-dom";
-import { useSelector } from "react-redux";
-
-type contectData = {
-  image: any;
-};
-
-type MyObject = {
-  bid: String,
-  share: String,
-  oldamount: String
-  // userId: String
-}
+import { useState,useEffect } from "react";
+import { getRequest, putRequest } from "../../../service/apiCall";
 
 const Sports = () => {
-  const token = useSelector((state: any) => state.authReducer.Admintoken);
-  const baseUrl = import.meta.env.VITE_BASE_URL;
-  const navigate = useNavigate();
-  const [dataBody, setDataBody] = useState({
-    title: "",
-    resolution: "",
-    endDate: "", // Add endDate and endTime fields to dataBody
-    endTime: ""
-  });
-  const [img, setImg] = useState<File | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [bid, setBid] = useState<MyObject[]>([])
 
-  const [team1, setTeam1] = useState<contectData>({
-    image: null,
-  });
+  const [loading, setLoading] = useState(false);
+  const [data, setData] = useState<any>({});
+
+
+
 
   const [form] = Form.useForm();
 
-  const handleTeam1 = (event: any) => {
-    const file = event.target.files[0];
-    setImg(file);
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onloadend = () => {
-      setTeam1({ image: reader.result });
+  const GetAllTrading = async () => {
+    setLoading(true);
+
+    const onSuccess = (res: any) => {
+      setLoading(false);
+      setData(res?.data);
     };
+
+    const onError = () => {
+      setLoading(false);
+    };
+
+    await getRequest("", "video/get-video", true, onSuccess, onError);
   };
 
-  const formHandler = async (value: any) => {
-    if (team1?.image) {
-      setLoading(true);
+  useEffect(() => {
+    GetAllTrading();
+  }, []);
 
-      let formData = new FormData();
-      Object.entries(dataBody).forEach(([key, value]) => {
-        formData.append(key, value);
-      });
-      formData.append("category", value.category);
-      formData.append(`bids`, JSON.stringify(bid));
-      if (img) {
-        formData.append("image", img);
-      }
-      fetch(`${baseUrl}/api/v1/admin/trading/politics`, {
-        method: "post",
-        headers: {
-          "x-sh-auth": token,
-        },
-        body: formData,
-      })
-        .then((res) => res.json())
-        .then((data) => {
-          setDataBody({
-            title: "",
-            resolution: "",
-            endDate: "",
-            endTime: ""
-          });
-          setLoading(false);
-          if (data?.success) {
-            form.resetFields();
-            message.success(data?.message);
-            setTeam1({ image: null });
-            navigate("/admin/dashboard");
-          }
-        });
-    } else {
-      message.warning("please upload image");
-    }
+
+
+  const formHandler = async (e: any) => {
+
+    console.log(e,"e?.viode3")
+    setLoading(true);
+
+    const onSuccess = (res: any) => {
+      message.success(res?.message);
+      setLoading(false);
+    };
+    const onError = (err: any) => {
+      message.error(err?.message);
+      setLoading(false);
+    };
+
+    const formData = {
+      url1: e?.video1,
+      url2: e?.video2,
+      url3: e?.video3,
+    };
+
+    await putRequest(formData, `video/update/${data?._id}`, true, onSuccess, onError);
+
   };
 
-  const onChange = (e: any) => {
-    const { name, value } = e.target;
-    setDataBody({ ...dataBody, [name]: value });
-  };
 
-  const onChangePrice = (e: any) => {
-    const { name, value } = e.target;
-    var newArr = [...bid, {
-      bid: name,
-      share: "1",
-      oldamount: value
-    }]
-    setBid(newArr)
-  };
+  
+  useEffect(()=>{
+    form.setFieldsValue({
+      video1:data?.url1,
+      video2:data?.url2,
+      video3:data?.url3,
+    })
+  },[data])
 
-  // const handleChange = (value: string) => {
-  //   setDataBody({ ...dataBody, category: value });
-  //   console.log(dataBody)
-  // };
+
 
   return (
     <Spin spinning={loading}>
-      <TopBar title="Video" breadcrumb={true} consdition={true} />
+      <TopBar title="Video"  />
       <Form
         form={form}
         onFinish={formHandler}
@@ -120,14 +82,26 @@ const Sports = () => {
       >
         <Row gutter={10}>
           <Col span={18}>
-            <Form.Item name="video" label="Video Url" rules={[{ required: true }]}>
+            <Form.Item name="video1" label="Video Url One" rules={[{ required: true }]}>
               <Input
-                placeholder="Enter the video url"
-                name="title"
-                id="title"
+                placeholder="Enter the video url one"
                 className="ant-input-affix-wrapper"
-                value={dataBody.title}
-                onChange={onChange}
+              />
+            </Form.Item>
+          </Col>
+          <Col span={18}>
+            <Form.Item name="video2" label="Video Url Two" rules={[{ required: true }]}>
+              <Input
+                placeholder="Enter the video url two"
+                className="ant-input-affix-wrapper"
+              />
+            </Form.Item>
+          </Col>
+          <Col span={18}>
+            <Form.Item name="video3" label="Video Url Three" rules={[{ required: true }]}>
+              <Input
+                placeholder="Enter the video url three"
+                className="ant-input-affix-wrapper"
               />
             </Form.Item>
           </Col>
